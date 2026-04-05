@@ -27,6 +27,7 @@ import (
 	"buf.build/go/hyperpb/internal/debug"
 	"buf.build/go/hyperpb/internal/tdp/dynamic"
 	"buf.build/go/hyperpb/internal/tdp/empty"
+	"buf.build/go/hyperpb/internal/tdp/repeated"
 	"buf.build/go/hyperpb/internal/tdp/vm"
 	"buf.build/go/hyperpb/internal/xprotoreflect"
 	"buf.build/go/hyperpb/internal/xunsafe"
@@ -45,6 +46,14 @@ var (
 // Message implements [protoreflect.Message].
 type Message struct {
 	impl dynamic.Message
+}
+
+// Uint64List is a thin repeated uint64 view that avoids protoreflect.Value
+// boxing for each element access.
+type Uint64List interface {
+	Len() int
+	Get(int) uint64
+	Copy([]uint64) []uint64
 }
 
 // NewMessage allocates a new [Message] of the given [MessageType].
@@ -279,6 +288,36 @@ func (m *Message) GetStringByIndexUnchecked(n int) string {
 // index without descriptor lookup.
 func (m *Message) GetUint64ByIndexUnchecked(n int) uint64 {
 	return m.impl.GetUint64ByIndexUnchecked(n)
+}
+
+// GetUint64ListByIndexUnchecked retrieves a repeated uint64/fixed64 field by
+// raw descriptor index without going through protoreflect.List.Get.
+func (m *Message) GetUint64ListByIndexUnchecked(n int) Uint64List {
+	if m == nil || n < 0 || n >= len(m.impl.Type().FieldDescriptors) {
+		return nil
+	}
+
+	field := m.impl.Type().ByIndex(n)
+	if !field.IsValid() {
+		return nil
+	}
+
+	switch m.impl.Type().FieldDescriptors[n].Kind() {
+	case protoreflect.Uint64Kind:
+		list := dynamic.GetField[repeated.Scalars[byte, uint64]](&m.impl, field.Offset)
+		if list == nil {
+			return nil
+		}
+		return *list
+	case protoreflect.Fixed64Kind:
+		list := dynamic.GetField[repeated.Scalars[uint64, uint64]](&m.impl, field.Offset)
+		if list == nil {
+			return nil
+		}
+		return *list
+	default:
+		return nil
+	}
 }
 
 // GetInt64ByIndexUnchecked retrieves an int-like field by raw descriptor

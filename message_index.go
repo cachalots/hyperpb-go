@@ -26,12 +26,44 @@ type indexedUint64Getter interface {
 	GetUint64ByIndexUnchecked(int) uint64
 }
 
+type indexedUint64ListGetter interface {
+	GetUint64ListByIndexUnchecked(int) Uint64List
+}
+
 type indexedInt64Getter interface {
 	GetInt64ByIndexUnchecked(int) int64
 }
 
 type messageListGetter interface {
 	GetMessage(int) protoreflect.Message
+}
+
+type reflectUint64List struct {
+	raw protoreflect.List
+}
+
+func (r reflectUint64List) Len() int {
+	if r.raw == nil {
+		return 0
+	}
+	return r.raw.Len()
+}
+
+func (r reflectUint64List) Get(n int) uint64 {
+	if r.raw == nil || n < 0 || n >= r.raw.Len() {
+		return 0
+	}
+	return r.raw.Get(n).Uint()
+}
+
+func (r reflectUint64List) Copy(out []uint64) []uint64 {
+	if r.raw == nil || r.raw.Len() == 0 {
+		return nil
+	}
+	for i := 0; i < r.raw.Len(); i++ {
+		out = append(out, r.raw.Get(i).Uint())
+	}
+	return out
 }
 
 // GetByIndex returns a field by raw descriptor index, using hyperpb's fast
@@ -152,6 +184,22 @@ func Uint64ByIndex(msg protoreflect.Message, index int) uint64 {
 		return 0
 	}
 	return xprotoreflect.GetRawInt(v)
+}
+
+// Uint64ListByIndex returns a repeated uint64/fixed64 field by raw
+// descriptor index, using hyperpb's typed fast path when available.
+func Uint64ListByIndex(msg protoreflect.Message, index int) Uint64List {
+	if msg == nil || index < 0 {
+		return nil
+	}
+	if fast, ok := msg.(indexedUint64ListGetter); ok {
+		return fast.GetUint64ListByIndexUnchecked(index)
+	}
+	list := ListByIndex(msg, index)
+	if list == nil {
+		return nil
+	}
+	return reflectUint64List{raw: list}
 }
 
 // Int64ByIndex returns an int-like field by raw descriptor index.
