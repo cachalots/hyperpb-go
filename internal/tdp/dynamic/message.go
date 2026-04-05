@@ -27,6 +27,7 @@ import (
 	"buf.build/go/hyperpb/internal/debug"
 	"buf.build/go/hyperpb/internal/tdp"
 	"buf.build/go/hyperpb/internal/tdp/empty"
+	"buf.build/go/hyperpb/internal/xprotoreflect"
 	"buf.build/go/hyperpb/internal/xunsafe"
 	"buf.build/go/hyperpb/internal/xunsafe/layout"
 	"buf.build/go/hyperpb/internal/zc"
@@ -162,6 +163,40 @@ func (m *Message) Get(fd protoreflect.FieldDescriptor) protoreflect.Value {
 // no bounds checks.
 func (m *Message) GetByIndexUnchecked(n int) protoreflect.Value {
 	return m.Type().ByIndex(n).Get(unsafe.Pointer(m))
+}
+
+// GetMessageByIndexUnchecked retrieves a nested message field by raw
+// descriptor index without descriptor lookup.
+func (m *Message) GetMessageByIndexUnchecked(n int) protoreflect.Message {
+	return xprotoreflect.GetMessage[protoreflect.Message](m.GetByIndexUnchecked(n))
+}
+
+// GetListByIndexUnchecked retrieves a repeated field by raw descriptor index
+// without descriptor lookup.
+func (m *Message) GetListByIndexUnchecked(n int) protoreflect.List {
+	return xprotoreflect.List(m.GetByIndexUnchecked(n))
+}
+
+// GetStringByIndexUnchecked retrieves a string field by raw descriptor index
+// without descriptor lookup.
+func (m *Message) GetStringByIndexUnchecked(n int) string {
+	v := m.GetByIndexUnchecked(n)
+	if !v.IsValid() {
+		return ""
+	}
+	return xprotoreflect.GetString(v)
+}
+
+// GetUint64ByIndexUnchecked retrieves a uint-like field by raw descriptor
+// index without descriptor lookup.
+func (m *Message) GetUint64ByIndexUnchecked(n int) uint64 {
+	return xprotoreflect.GetRawInt(m.GetByIndexUnchecked(n))
+}
+
+// GetInt64ByIndexUnchecked retrieves an int-like field by raw descriptor
+// index without descriptor lookup.
+func (m *Message) GetInt64ByIndexUnchecked(n int) int64 {
+	return int64(xprotoreflect.GetRawInt(m.GetByIndexUnchecked(n)))
 }
 
 // GetField returns the field pointer for a given message.

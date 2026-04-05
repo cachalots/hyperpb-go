@@ -156,7 +156,11 @@ func (m *Message) Has(fd protoreflect.FieldDescriptor) bool {
 //
 // Clear implements [protoreflect.Message].
 func (m *Message) Clear(protoreflect.FieldDescriptor) {
-	if m.Shared().impl.Src == nil {
+	if m == nil {
+		return
+	}
+	shared := m.Shared()
+	if shared == nil || shared.impl.Src == nil {
 		return
 	}
 	panic(debug.Unsupported())
@@ -245,6 +249,42 @@ func (m *Message) Initialized() error {
 // Get implements [protoreflect.Message].
 func (m *Message) Get(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	return m.impl.Get(fd)
+}
+
+// GetByIndexUnchecked retrieves a field by raw descriptor index without
+// descriptor lookup.
+func (m *Message) GetByIndexUnchecked(n int) protoreflect.Value {
+	return m.impl.GetByIndexUnchecked(n)
+}
+
+// GetMessageByIndexUnchecked retrieves a nested message field by raw
+// descriptor index without descriptor lookup.
+func (m *Message) GetMessageByIndexUnchecked(n int) protoreflect.Message {
+	return m.impl.GetMessageByIndexUnchecked(n)
+}
+
+// GetListByIndexUnchecked retrieves a repeated field by raw descriptor index
+// without descriptor lookup.
+func (m *Message) GetListByIndexUnchecked(n int) protoreflect.List {
+	return m.impl.GetListByIndexUnchecked(n)
+}
+
+// GetStringByIndexUnchecked retrieves a string field by raw descriptor index
+// without descriptor lookup.
+func (m *Message) GetStringByIndexUnchecked(n int) string {
+	return m.impl.GetStringByIndexUnchecked(n)
+}
+
+// GetUint64ByIndexUnchecked retrieves a uint-like field by raw descriptor
+// index without descriptor lookup.
+func (m *Message) GetUint64ByIndexUnchecked(n int) uint64 {
+	return m.impl.GetUint64ByIndexUnchecked(n)
+}
+
+// GetInt64ByIndexUnchecked retrieves an int-like field by raw descriptor
+// index without descriptor lookup.
+func (m *Message) GetInt64ByIndexUnchecked(n int) int64 {
+	return m.impl.GetInt64ByIndexUnchecked(n)
 }
 
 // Set panics.
@@ -344,6 +384,9 @@ func (m *Message) IsValid() bool {
 //
 // ProtoMethods implements [protoreflect.Message].
 func (m *Message) ProtoMethods() *protoiface.Methods {
+	if m == nil || m.impl.Shared == nil || m.impl.Shared.Library() == nil {
+		return nil
+	}
 	return &m.impl.Type().Methods
 }
 

@@ -51,19 +51,19 @@ var oneofFields = map[protoreflect.Kind]*compiler.Archetype{
 	protoreflect.Int32Kind: {
 		Layout:  layout.Of[int32](),
 		Oneof:   true,
-		Getter:  getOneofScalar[int32],
+		Getter:  getOneofInt32,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseOneofVarint32}},
 	},
 	protoreflect.Uint32Kind: {
 		Layout:  layout.Of[uint32](),
 		Oneof:   true,
-		Getter:  getOneofScalar[uint32],
+		Getter:  getOneofUint32,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseOneofVarint32}},
 	},
 	protoreflect.Sint32Kind: {
 		Layout:  layout.Of[int32](),
 		Oneof:   true,
-		Getter:  getOneofScalar[int32],
+		Getter:  getOneofInt32,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseOneofZigZag32}},
 	},
 
@@ -71,19 +71,19 @@ var oneofFields = map[protoreflect.Kind]*compiler.Archetype{
 	protoreflect.Int64Kind: {
 		Layout:  layout.Of[int64](),
 		Oneof:   true,
-		Getter:  getOneofScalar[int64],
+		Getter:  getOneofInt64,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseOneofVarint64}},
 	},
 	protoreflect.Uint64Kind: {
 		Layout:  layout.Of[uint64](),
 		Oneof:   true,
-		Getter:  getOneofScalar[uint64],
+		Getter:  getOneofUint64,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseOneofVarint64}},
 	},
 	protoreflect.Sint64Kind: {
 		Layout:  layout.Of[int64](),
 		Oneof:   true,
-		Getter:  getOneofScalar[int64],
+		Getter:  getOneofInt64,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseOneofZigZag64}},
 	},
 
@@ -91,13 +91,13 @@ var oneofFields = map[protoreflect.Kind]*compiler.Archetype{
 	protoreflect.Fixed32Kind: {
 		Layout:  layout.Of[uint32](),
 		Oneof:   true,
-		Getter:  getOneofScalar[uint32],
+		Getter:  getOneofUint32,
 		Parsers: []compiler.Parser{{Kind: protowire.Fixed32Type, Thunk: parseOneofFixed32}},
 	},
 	protoreflect.Sfixed32Kind: {
 		Layout:  layout.Of[int32](),
 		Oneof:   true,
-		Getter:  getOneofScalar[int32],
+		Getter:  getOneofInt32,
 		Parsers: []compiler.Parser{{Kind: protowire.Fixed32Type, Thunk: parseOneofFixed32}},
 	},
 	protoreflect.FloatKind: {
@@ -111,13 +111,13 @@ var oneofFields = map[protoreflect.Kind]*compiler.Archetype{
 	protoreflect.Fixed64Kind: {
 		Layout:  layout.Of[uint64](),
 		Oneof:   true,
-		Getter:  getOneofScalar[uint64],
+		Getter:  getOneofUint64,
 		Parsers: []compiler.Parser{{Kind: protowire.Fixed64Type, Thunk: parseOneofFixed64}},
 	},
 	protoreflect.Sfixed64Kind: {
 		Layout:  layout.Of[int64](),
 		Oneof:   true,
-		Getter:  getOneofScalar[int64],
+		Getter:  getOneofInt64,
 		Parsers: []compiler.Parser{{Kind: protowire.Fixed64Type, Thunk: parseOneofFixed64}},
 	},
 	protoreflect.DoubleKind: {
@@ -137,7 +137,7 @@ var oneofFields = map[protoreflect.Kind]*compiler.Archetype{
 	protoreflect.EnumKind: {
 		Layout:  layout.Of[protoreflect.EnumNumber](),
 		Oneof:   true,
-		Getter:  getOneofScalar[protoreflect.EnumNumber],
+		Getter:  getOneofEnum,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseOneofVarint32}},
 	},
 
@@ -183,6 +183,46 @@ func getOneofScalar[T tdp.Scalar](m *dynamic.Message, _ *tdp.Type, getter *tdp.A
 	}
 	v := *dynamic.GetField[T](m, getter.Offset)
 	return xprotoreflect.ValueOfScalar(v)
+}
+
+func getOneofInt32(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	which := xunsafe.ByteLoad[uint32](m, getter.Offset.Bit)
+	if which != getter.Offset.Number {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfInt32(*dynamic.GetField[int32](m, getter.Offset))
+}
+
+func getOneofUint32(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	which := xunsafe.ByteLoad[uint32](m, getter.Offset.Bit)
+	if which != getter.Offset.Number {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfUint32(*dynamic.GetField[uint32](m, getter.Offset))
+}
+
+func getOneofInt64(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	which := xunsafe.ByteLoad[uint32](m, getter.Offset.Bit)
+	if which != getter.Offset.Number {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfInt64(*dynamic.GetField[int64](m, getter.Offset))
+}
+
+func getOneofUint64(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	which := xunsafe.ByteLoad[uint32](m, getter.Offset.Bit)
+	if which != getter.Offset.Number {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfUint64(*dynamic.GetField[uint64](m, getter.Offset))
+}
+
+func getOneofEnum(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	which := xunsafe.ByteLoad[uint32](m, getter.Offset.Bit)
+	if which != getter.Offset.Number {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfEnum(*dynamic.GetField[protoreflect.EnumNumber](m, getter.Offset))
 }
 
 func getOneofBool(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {

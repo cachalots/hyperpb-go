@@ -136,3 +136,9 @@ func (r *reflectMessages) Len() int {
 func (r *reflectMessages) Get(n int) protoreflect.Value {
 	return protoreflect.ValueOfMessage(r.raw.Get(n).ProtoReflect())
 }
+
+// GetMessage returns the nth message directly, without wrapping it in a
+// protoreflect.Value first.
+func (r *reflectMessages) GetMessage(n int) protoreflect.Message {
+	return r.raw.Get(n).ProtoReflect()
+}

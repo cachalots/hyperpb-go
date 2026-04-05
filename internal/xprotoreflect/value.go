@@ -26,6 +26,14 @@ import (
 	"buf.build/go/hyperpb/internal/xunsafe"
 )
 
+var (
+	int32Type  = xunsafe.AnyType(int32(0))
+	int64Type  = xunsafe.AnyType(int64(0))
+	uint32Type = xunsafe.AnyType(uint32(0))
+	uint64Type = xunsafe.AnyType(uint64(0))
+	enumType   = xunsafe.AnyType(protoreflect.EnumNumber(0))
+)
+
 // Int is any integer type that a [protoreflect.Value] will contain inline
 // rather than as a pointer to an interface.
 type Int interface {
@@ -42,22 +50,67 @@ func ValueOfScalar(v any) protoreflect.Value {
 	case bool:
 		return protoreflect.ValueOfBool(v)
 	case int32:
-		return protoreflect.ValueOfInt32(v)
+		return ValueOfInt32(v)
 	case int64:
-		return protoreflect.ValueOfInt64(v)
+		return ValueOfInt64(v)
 	case uint32:
-		return protoreflect.ValueOfUint32(v)
+		return ValueOfUint32(v)
 	case uint64:
-		return protoreflect.ValueOfUint64(v)
+		return ValueOfUint64(v)
 	case float32:
 		return protoreflect.ValueOfFloat32(v)
 	case float64:
 		return protoreflect.ValueOfFloat64(v)
 	case protoreflect.EnumNumber:
-		return protoreflect.ValueOfEnum(v)
+		return ValueOfEnum(v)
 	default:
 		panic(fmt.Sprintf("invalid type: %T", v))
 	}
+}
+
+// ValueOfInt32 constructs a protoreflect.Value for an int32 without going
+// through an interface conversion.
+func ValueOfInt32(v int32) protoreflect.Value {
+	return xunsafe.BitCast[protoreflect.Value](rawValue{
+		typ: int32Type,
+		num: uint64(v),
+	})
+}
+
+// ValueOfInt64 constructs a protoreflect.Value for an int64 without going
+// through an interface conversion.
+func ValueOfInt64(v int64) protoreflect.Value {
+	return xunsafe.BitCast[protoreflect.Value](rawValue{
+		typ: int64Type,
+		num: uint64(v),
+	})
+}
+
+// ValueOfUint32 constructs a protoreflect.Value for a uint32 without going
+// through an interface conversion.
+func ValueOfUint32(v uint32) protoreflect.Value {
+	return xunsafe.BitCast[protoreflect.Value](rawValue{
+		typ: uint32Type,
+		num: uint64(v),
+	})
+}
+
+// ValueOfUint64 constructs a protoreflect.Value for a uint64 without going
+// through an interface conversion.
+func ValueOfUint64(v uint64) protoreflect.Value {
+	return xunsafe.BitCast[protoreflect.Value](rawValue{
+		typ: uint64Type,
+		num: v,
+	})
+}
+
+// ValueOfEnum constructs a protoreflect.Value for an enum number without going
+// through an interface conversion.
+func ValueOfEnum(v protoreflect.EnumNumber) protoreflect.Value {
+	return xunsafe.BitCast[protoreflect.Value](rawValue{
+		typ: enumType,
+		num: uint64(v),
+	})
 }
 
 // GetInt extracts a scalar value out of a [protoreflect.Value].

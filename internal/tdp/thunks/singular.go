@@ -47,46 +47,46 @@ var singularFields = map[protoreflect.Kind]*compiler.Archetype{
 	// 32-bit varint types.
 	protoreflect.Int32Kind: {
 		Layout:  layout.Of[int32](),
-		Getter:  getScalar[int32],
+		Getter:  getInt32,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseVarint32}},
 	},
 	protoreflect.Uint32Kind: {
 		Layout:  layout.Of[uint32](),
-		Getter:  getScalar[uint32],
+		Getter:  getUint32,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseVarint32}},
 	},
 	protoreflect.Sint32Kind: {
 		Layout:  layout.Of[int32](),
-		Getter:  getScalar[int32],
+		Getter:  getInt32,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseZigZag32}},
 	},
 
 	// 64-bit varint types.
 	protoreflect.Int64Kind: {
 		Layout:  layout.Of[int64](),
-		Getter:  getScalar[int64],
+		Getter:  getInt64,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseVarint64}},
 	},
 	protoreflect.Uint64Kind: {
 		Layout:  layout.Of[uint64](),
-		Getter:  getScalar[uint64],
+		Getter:  getUint64,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseVarint64}},
 	},
 	protoreflect.Sint64Kind: {
 		Layout:  layout.Of[int64](),
-		Getter:  getScalar[int64],
+		Getter:  getInt64,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseZigZag64}},
 	},
 
 	// 32-bit fixed types.
 	protoreflect.Fixed32Kind: {
 		Layout:  layout.Of[uint32](),
-		Getter:  getScalar[uint32],
+		Getter:  getUint32,
 		Parsers: []compiler.Parser{{Kind: protowire.Fixed32Type, Thunk: parseFixed32}},
 	},
 	protoreflect.Sfixed32Kind: {
 		Layout:  layout.Of[int32](),
-		Getter:  getScalar[int32],
+		Getter:  getInt32,
 		Parsers: []compiler.Parser{{Kind: protowire.Fixed32Type, Thunk: parseFixed32}},
 	},
 	protoreflect.FloatKind: {
@@ -98,12 +98,12 @@ var singularFields = map[protoreflect.Kind]*compiler.Archetype{
 	// 64-bit fixed types.
 	protoreflect.Fixed64Kind: {
 		Layout:  layout.Of[uint64](),
-		Getter:  getScalar[uint64],
+		Getter:  getUint64,
 		Parsers: []compiler.Parser{{Kind: protowire.Fixed64Type, Thunk: parseFixed64}},
 	},
 	protoreflect.Sfixed64Kind: {
 		Layout:  layout.Of[int64](),
-		Getter:  getScalar[int64],
+		Getter:  getInt64,
 		Parsers: []compiler.Parser{{Kind: protowire.Fixed64Type, Thunk: parseFixed64}},
 	},
 	protoreflect.DoubleKind: {
@@ -121,7 +121,7 @@ var singularFields = map[protoreflect.Kind]*compiler.Archetype{
 	},
 	protoreflect.EnumKind: {
 		Layout:  layout.Of[protoreflect.EnumNumber](),
-		Getter:  getScalar[protoreflect.EnumNumber],
+		Getter:  getEnum,
 		Parsers: []compiler.Parser{{Kind: protowire.VarintType, Thunk: parseVarint32}},
 	},
 
@@ -169,6 +169,66 @@ func getScalar[T tdp.Scalar](m *dynamic.Message, _ *tdp.Type, getter *tdp.Access
 	}
 
 	return xprotoreflect.ValueOfScalar(v)
+}
+
+func getInt32(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	p := dynamic.GetField[int32](m, getter.Offset)
+	if p == nil {
+		return protoreflect.Value{}
+	}
+	v := *p
+	if v == 0 {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfInt32(v)
+}
+
+func getUint32(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	p := dynamic.GetField[uint32](m, getter.Offset)
+	if p == nil {
+		return protoreflect.Value{}
+	}
+	v := *p
+	if v == 0 {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfUint32(v)
+}
+
+func getInt64(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	p := dynamic.GetField[int64](m, getter.Offset)
+	if p == nil {
+		return protoreflect.Value{}
+	}
+	v := *p
+	if v == 0 {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfInt64(v)
+}
+
+func getUint64(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	p := dynamic.GetField[uint64](m, getter.Offset)
+	if p == nil {
+		return protoreflect.Value{}
+	}
+	v := *p
+	if v == 0 {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfUint64(v)
+}
+
+func getEnum(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
+	p := dynamic.GetField[protoreflect.EnumNumber](m, getter.Offset)
+	if p == nil {
+		return protoreflect.Value{}
+	}
+	v := *p
+	if v == 0 {
+		return protoreflect.Value{}
+	}
+	return xprotoreflect.ValueOfEnum(v)
 }
 
 func getBool(m *dynamic.Message, _ *tdp.Type, getter *tdp.Accessor) protoreflect.Value {
