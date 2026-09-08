@@ -120,6 +120,15 @@ func (m *Message) Has(fd protoreflect.FieldDescriptor) bool {
 	}
 
 	v := f.Get(unsafe.Pointer(m))
+	return hasValue(fd, v)
+}
+
+// HasByIndexUnchecked is Has without descriptor lookup or bounds checks.
+func (m *Message) HasByIndexUnchecked(n int) bool {
+	return hasValue(m.Type().FieldDescriptors[n], m.GetByIndexUnchecked(n))
+}
+
+func hasValue(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
 	switch {
 	case !v.IsValid():
 		return false

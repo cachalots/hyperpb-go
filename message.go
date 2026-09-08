@@ -50,6 +50,8 @@ type Message struct {
 
 // Uint64List is a thin repeated uint64 view that avoids protoreflect.Value
 // boxing for each element access.
+// Like the message, a hyperpb-backed list is borrowed from Shared and must not
+// be used after Shared.Free or after the aliased input buffer is reused.
 type Uint64List interface {
 	Len() int
 	Get(int) uint64
@@ -159,6 +161,12 @@ func (m *Message) Range(yield func(protoreflect.FieldDescriptor, protoreflect.Va
 // Has implements [protoreflect.Message].
 func (m *Message) Has(fd protoreflect.FieldDescriptor) bool {
 	return m.impl.Has(fd)
+}
+
+// HasByIndexUnchecked is Has without a descriptor lookup. The caller must
+// provide a valid descriptor index from this message's type.
+func (m *Message) HasByIndexUnchecked(n int) bool {
+	return m.impl.HasByIndexUnchecked(n)
 }
 
 // Clear panics, unless this message has not been unmarshaled yet.
@@ -292,6 +300,7 @@ func (m *Message) GetUint64ByIndexUnchecked(n int) uint64 {
 
 // GetUint64ListByIndexUnchecked retrieves a repeated uint64/fixed64 field by
 // raw descriptor index without going through protoreflect.List.Get.
+// It borrows the arena-owned descriptor instead of boxing a descriptor copy.
 func (m *Message) GetUint64ListByIndexUnchecked(n int) Uint64List {
 	if m == nil || n < 0 || n >= len(m.impl.Type().FieldDescriptors) {
 		return nil
@@ -308,13 +317,13 @@ func (m *Message) GetUint64ListByIndexUnchecked(n int) Uint64List {
 		if list == nil {
 			return nil
 		}
-		return *list
+		return list
 	case protoreflect.Fixed64Kind:
 		list := dynamic.GetField[repeated.Scalars[uint64, uint64]](&m.impl, field.Offset)
 		if list == nil {
 			return nil
 		}
-		return *list
+		return list
 	default:
 		return nil
 	}

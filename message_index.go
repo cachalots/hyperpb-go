@@ -10,6 +10,23 @@ type indexGetter interface {
 	GetByIndexUnchecked(int) protoreflect.Value
 }
 
+type indexedPresenceGetter interface {
+	HasByIndexUnchecked(int) bool
+}
+
+// HasByIndex reports protobuf field presence by descriptor index. In particular,
+// optional scalars explicitly set to zero and present empty submessages return
+// true. Nil messages and invalid indexes return false.
+func HasByIndex(msg protoreflect.Message, index int) bool {
+	if msg == nil || !msg.IsValid() || index < 0 || index >= msg.Descriptor().Fields().Len() {
+		return false
+	}
+	if fast, ok := msg.(indexedPresenceGetter); ok {
+		return fast.HasByIndexUnchecked(index)
+	}
+	return msg.Has(msg.Descriptor().Fields().Get(index))
+}
+
 type indexedMessageGetter interface {
 	GetMessageByIndexUnchecked(int) protoreflect.Message
 }
